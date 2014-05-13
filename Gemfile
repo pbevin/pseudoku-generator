@@ -4,3 +4,5 @@ source 'https://rubygems.org'
 gemspec
 
 gem 'rake-compiler', '~> 0.9.2'
+gem 'rspec', '~> 3.0.0.beta2'
+gem 'guard-rspec'
