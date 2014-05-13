@@ -27,10 +27,9 @@ static char ratingbuf[100];
 
 static char gridchar[11] = ".123456789";
 
-void generate(void (*callback)(const char *grid, struct stats *stats)) {
+void generate(char *output) {
   int grid[81];
   int perm[81];
-  char gridchars[82];
   int nsol;
   int i;
   int clues;
@@ -133,8 +132,7 @@ void generate(void (*callback)(const char *grid, struct stats *stats)) {
   while (!(inrange(backtracks, minbacktracks, maxbacktracks)
         && inrange(clues, minclues, maxclues)));
 
-  printgrid(gridchars, grid);
-  callback(gridchars, 0);
+  printgrid(output, grid);
 }
 
 static void printgrid(char *p, const int *q) {

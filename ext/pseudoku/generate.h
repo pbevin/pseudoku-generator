@@ -1,6 +1,3 @@
-struct stats {
-  int backtracks;
-  int clues;
-};
-
-extern void generate(void(*callback)(const char *grid, struct stats *stats));
+// Generate a Sudoku puzzle and place it into
+// output, which must have 81 characters available.
+extern void generate(char *output);
