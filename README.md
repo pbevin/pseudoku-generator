@@ -1,6 +1,6 @@
 # Pseudoku
 
-TODO: Write a gem description
+Fast Sudoku puzzle generator
 
 ## Installation
 
