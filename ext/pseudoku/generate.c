@@ -1,8 +1,8 @@
 #include <string.h>
 #include <stdlib.h>
+#include <stdio.h>
+#include <time.h>
 #include "solve.h"
-#include "print.h"
-#include "grid.h"
 
 #include "generate.h"
 
@@ -11,16 +11,17 @@ extern void initsolve();
 
 /* Forward declarations */
 static void permute(int *perm, int len);
-static void setseed(unsigned int *seed);
 static void parserange(char *s, int *min, int *max);
 static int inrange(int val, int min, int max);
-static void print_grid(int *grid, int format, int puzno);
+static void printgrid(char *gridchars, const int *grid);
 
-static int minbacktracks;
-static int maxbacktracks;
+static int setseed = 0;
 
-static int minclues;
-static int maxclues;
+static int minbacktracks = -1;
+static int maxbacktracks = -1;
+
+static int minclues = -1;
+static int maxclues = -1;
 
 static char ratingbuf[100];
 
@@ -29,12 +30,18 @@ static char gridchar[11] = ".123456789";
 void generate(void (*callback)(const char *grid, struct stats *stats)) {
   int grid[81];
   int perm[81];
+  char gridchars[82];
   int nsol;
   int i;
   int clues;
   int backtracks;
   extern int solver_backtracks;
   int symmetry = 1;
+
+  if (!setseed) {
+    srandom(time(NULL));
+    setseed = 1;
+  }
 
   permute(perm, 81);
 
@@ -125,6 +132,17 @@ void generate(void (*callback)(const char *grid, struct stats *stats)) {
   }
   while (!(inrange(backtracks, minbacktracks, maxbacktracks)
         && inrange(clues, minclues, maxclues)));
+
+  printgrid(gridchars, grid);
+  callback(gridchars, 0);
+}
+
+static void printgrid(char *p, const int *q) {
+  int i;
+  for (i = 0; i < 81; i++) {
+    p[i] = gridchar[q[i]];
+  }
+  p[81] = 0;
 }
 
 /* Parse a ranged argument as a min and max. */
@@ -157,3 +175,4 @@ static void permute(int *P, int len)
     P[j] = i;
   }
 }
+

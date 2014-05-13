@@ -24,7 +24,6 @@
 #include <memory.h>
 #include <stdarg.h>
 #include "solve.h"
-#include "grid.h"
 
 #define NROWS 729
 #define NCOLS 500
