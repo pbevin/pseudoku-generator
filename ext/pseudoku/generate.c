@@ -10,7 +10,6 @@ extern int solve();
 extern void initsolve();
 
 /* Forward declarations */
-static void permute(int *perm, int len);
 static void parserange(char *s, int *min, int *max);
 static int inrange(int val, int min, int max);
 static void printgrid(char *gridchars, const int *grid);
@@ -115,7 +114,7 @@ void generate(char *output) {
           save2 = grid[reflect];
           grid[reflect] = 0;
         }
-        if (solve(grid) > 1 || !inrange(solver_backtracks, minbacktracks, maxbacktracks)) {
+        if (solve(grid) != 1 || !inrange(solver_backtracks, minbacktracks, maxbacktracks)) {
           grid[pos] = save1;
           if (symmetry)
             grid[reflect] = save2;
@@ -162,15 +161,3 @@ static int inrange(int v, int min, int max) {
     return 0;
   return 1;
 }
-
-/* Algorithm P, Knuth section 3.4.2 */
-static void permute(int *P, int len)
-{
-  int i;
-  for (i = 0; i < len; i++) {
-    int j = random() % (i + 1);
-    P[i] = P[j];
-    P[j] = i;
-  }
-}
-

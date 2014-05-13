@@ -47,7 +47,7 @@ int first_branch;
 
 
 /* Algorithm P, Knuth section 3.4.2 */
-static void permute(int *P, int len)
+void permute(int *P, int len)
 {
   int i;
   for (i = 0; i < len; i++) {
