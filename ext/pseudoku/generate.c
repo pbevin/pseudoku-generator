@@ -116,8 +116,9 @@ void generate(char *output) {
         }
         if (solve(grid) != 1 || !inrange(solver_backtracks, minbacktracks, maxbacktracks)) {
           grid[pos] = save1;
-          if (symmetry)
+          if (symmetry && save2) {
             grid[reflect] = save2;
+          }
           removed = 0;
         }
 

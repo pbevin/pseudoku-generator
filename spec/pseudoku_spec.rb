@@ -75,8 +75,11 @@ describe Pseudoku do
     end
 
     it "can solve a puzzle it generated" do
-      solution = pseudoku.solve(puzzle1)
-      expect(solution).to be_a_solution_of(puzzle1)
+      10.times do
+        puzzle = pseudoku.generate
+        solution = pseudoku.solve(puzzle)
+        expect(solution).to be_a_solution_of(puzzle)
+      end
     end
   end
 end
