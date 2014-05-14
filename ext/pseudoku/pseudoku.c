@@ -37,6 +37,8 @@ static VALUE ps_solve(VALUE self, VALUE pattern) {
     }
 
     return rb_str_new(grid, 81);
+  } else if (rc == 2) {
+    return Qfalse;
   } else {
     return Qnil;
   }

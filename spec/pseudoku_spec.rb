@@ -18,7 +18,7 @@ describe Pseudoku do
   let(:easy_solution) { "124563987796481532385792614561234879438957261279618453957126348613849725842375196" }
   let(:hard_puzzle)   { "..1.....8.4...79..2...9.1....4.....9.6.874.2.5.....4....5.3...4..35...1.9.....6.." }
   let(:hard_solution) { "791652348346187952258493176824315769169874523537926481675231894483569217912748635" }
-  let(:unsolvable)    { "..............1..2..5.9...4.6..34..9.38...26.2..61..5.9...2.3..6..8......4...5..." }
+  let(:unsolvable)    { "5..5...8......1..2..5.9...4.6..34..9.38...26.2..61..5.9...2.3..6..8......4...5..." }
   let(:no_clues) { "." * 81 }
 
   describe "an easy puzzle" do
@@ -57,14 +57,14 @@ describe Pseudoku do
   describe "a puzzle with no clues" do
 
     it "has no solution" do
-      expect(pseudoku.solve no_clues).to be_nil
+      expect(pseudoku.solve no_clues).to eq(false)
     end
 
   end
 
   describe '#generate' do
-    let(:puzzle1) { pseudoku.generate }
-    let(:puzzle2) { pseudoku.generate }
+    let(:puzzle1) { pseudoku.generate2 }
+    let(:puzzle2) { pseudoku.generate2 }
 
     it "generates a puzzle" do
       expect(puzzle1.length).to eq(81)
@@ -76,7 +76,7 @@ describe Pseudoku do
 
     it "can solve a puzzle it generated" do
       10.times do
-        puzzle = pseudoku.generate
+        puzzle = pseudoku.generate2
         solution = pseudoku.solve(puzzle)
         expect(solution).to be_a_solution_of(puzzle)
       end
