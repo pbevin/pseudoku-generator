@@ -40,8 +40,6 @@ static int colcount;
 static int colperm[NCOLS];
 int solver_debug = 0;
 
-struct puztype puztype = { 0, 1, 0 };
-
 int solver_backtracks;
 int first_branch;
 
@@ -93,18 +91,6 @@ static void explaincol(int c)
     c -= 243;
     dbprintf("box %d val %d\n", c/9+1, c%9+1);
   }
-  else if (c < 405) {
-    c -= 324;
-    dbprintf("box2 %d val %d\n", c/9+1, c%9+1);
-  }
-  else if (c < 414) {
-    c -= 405;
-    dbprintf("diag \\ val %d\n", c+1);
-  }
-  else {
-    c -= 414;
-    dbprintf("diag / val %d\n", c+1);
-  }
 }
 
 
@@ -133,23 +119,6 @@ void initsolve()
         NEXTCOL(r) = base + y * 9 + s;
         base += 81;
         NEXTCOL(r) = base + box * 9 + s;
-        base += 81;
-
-        if (puztype.usesecondary) {
-          int box2 = puztype.grid2[x*9+y] - 1;
-          NEXTCOL(r) = base + box2 * 9 + s;
-          base += 81;
-        }
-
-        if (puztype.diagonals) {
-          if (x == y) {  /* diagonal A (\) */
-            NEXTCOL(r) = base + s;
-          }
-          if (x == 8-y) { /* diagonal B (/) */
-            NEXTCOL(r) = base + 9 + s;
-          }
-          base += 18;
-        }
 
         r++;
       }
