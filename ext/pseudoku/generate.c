@@ -36,6 +36,8 @@ void generate(char *output) {
   extern int solver_backtracks;
   int symmetry = 1;
 
+  struct solver solver;
+
   if (!setseed) {
     srandom(time(NULL));
     setseed = 1;
@@ -43,7 +45,7 @@ void generate(char *output) {
 
   permute(perm, 81);
 
-  initsolve();
+  initsolve(&solver);
 
   /* Build a unique puzzle by adding symmetrical pairs of clues
    * randomly to the grid.  After adding each pair, try to solve:
@@ -64,7 +66,7 @@ void generate(char *output) {
       if (symmetry)
         grid[reflect] = 1 + random() % 9;
 
-      nsol = solve(grid);
+      nsol = solve(&solver, grid);
       if (nsol == 0) {
         grid[pos] = 0;
         if (symmetry)
@@ -83,7 +85,7 @@ void generate(char *output) {
     /* Add cells to reduce backtracks if over limit */
     if (!symmetry && maxbacktracks != -1) {
       while (backtracks > maxbacktracks) {
-        if (easier(grid)) {
+        if (easier(&solver, grid)) {
           //printf("easier (bt=%d)\n", solver_backtracks);
           clues++;
         }
@@ -114,7 +116,7 @@ void generate(char *output) {
           save2 = grid[reflect];
           grid[reflect] = 0;
         }
-        if (solve(grid) != 1 || !inrange(solver_backtracks, minbacktracks, maxbacktracks)) {
+        if (solve(&solver, grid) != 1 || !inrange(solver.solver_backtracks, minbacktracks, maxbacktracks)) {
           grid[pos] = save1;
           if (symmetry && save2) {
             grid[reflect] = save2;

@@ -25,23 +25,12 @@
 #include <stdarg.h>
 #include "solve.h"
 
-#define NROWS 729
-#define NCOLS 500
 #define COLS_SET 4
 #define ROWS_SET 18
 
-#define NEXTCOL(r) col[r][ncols[r]++]
+#define NEXTCOL(r) self->col[r][self->ncols[r]++]
 
-static short row[NCOLS][9];
-static short col[NROWS][7];
-static short ncols[NROWS];
-static short nrows[NCOLS];
-static int colcount;
-static int colperm[NCOLS];
 int solver_debug = 0;
-
-int solver_backtracks;
-int first_branch;
 
 
 /* Algorithm P, Knuth section 3.4.2 */
@@ -49,10 +38,15 @@ void permute(int *P, int len)
 {
   int i;
   for (i = 0; i < len; i++) {
-    int j = random() % (i + 1);
-    P[i] = P[j];
-    P[j] = i;
+    P[i] = i;
   }
+
+  /* int i; */
+  /* for (i = 0; i < len; i++) { */
+  /*   int j = random() % (i + 1); */
+  /*   P[i] = P[j]; */
+  /*   P[j] = i; */
+  /* } */
 }
 
 static int dbprintf(char *fmt, ...)
@@ -96,21 +90,21 @@ static void explaincol(int c)
 
 /* Call before first call to solve()
 */
-void initsolve()
+void initsolve(struct solver *self)
 {
   int x, y, s;
   int r = 0, c;
   int base;
 
-  memset(nrows, 0, sizeof(nrows));
-  memset(ncols, 0, sizeof(ncols));
+  memset(self->nrows, 0, sizeof(self->nrows));
+  memset(self->ncols, 0, sizeof(self->ncols));
 
   for (x = 0; x < 9; x++) {
     for (y = 0; y < 9; y++) {
       int box = 3*(x/3) + y/3;
       for (s = 0; s < 9; s++) {
         base = 0;
-        ncols[r] = 0;
+        self->ncols[r] = 0;
 
         NEXTCOL(r) = base + x * 9 + y;
         base += 81;
@@ -125,43 +119,36 @@ void initsolve()
     }
   }
 
-  colcount = base;
-
-  permute(colperm, colcount);
+  self->colcount = base;
 
   for (r = 0; r < NROWS; r++) {
     int i;
-    for (i = 0; i < ncols[r]; i++) {
-      c = col[r][i];
-      row[c][nrows[c]] = r;
-      nrows[c]++;
+    for (i = 0; i < self->ncols[r]; i++) {
+      c = self->col[r][i];
+      self->row[c][self->nrows[c]] = r;
+      self->nrows[c]++;
 #if 0
       printf("%d - %d rows (cur row %d)\n", c, nrows[c], r);
       explaincol(c);
 #endif
-      assert(nrows[c] <= ROWS_SET);
+      assert(self->nrows[c] <= ROWS_SET);
     }
   }
 }
 
-static int rowused[NROWS], colused[NCOLS], count[NCOLS];
-static int solrow[81];
-int solution[81];
-int solution_row[81];
-static int nchoices;
 
 
 /* Best column to proceed with for quick fail */
-static int mincol()
+static int mincol(struct solver *self)
 {
   int min = 999;
   int i;
   int best = 0;
 
-  for (i = 0; i < colcount; i++) {
-    int c = colperm[i];
-    int n = count[c];
-    if (!colused[c] && n < min) {
+  for (i = 0; i < self->colcount; i++) {
+    int c = i;
+    int n = self->count[c];
+    if (!self->colused[c] && n < min) {
       min = n;
       best = c;
       if (min < 2)
@@ -169,24 +156,12 @@ static int mincol()
     }
   }
   dbprintf("mincol(): choosing col %d (count=%d)\n", best, min);
-  nchoices = min;
+  self->nchoices = min;
   return best;
 }
 
-  void
-dumpsoln()
-{
-  int i;
-
-  for (i = 0; i < 81; i++) {
-    dbprintf("%d", solution[i]);
-    if (i % 9 == 8)
-      dbprintf("\n");
-  }
-}
-
 /* Recursive routine to find and count solutions. */
-static int search(int level, int solutions, int forcingcol, int backtracks)
+static int search(struct solver *self, int level, int solutions, int forcingcol, int backtracks)
 {
   int c, i, j;
   int impossible = 0, reason = 0;
@@ -196,69 +171,69 @@ static int search(int level, int solutions, int forcingcol, int backtracks)
   }
   if (level == 81) {
     if (solutions == 0) { /* first solution */
-      solver_backtracks = backtracks;
+      self->solver_backtracks = backtracks;
       for (i = 0; i < 81; i++) {
-        solution_row[i] = solrow[i];
+        self->solution_row[i] = self->solrow[i];
       }
 
-      memset(solution, 0, sizeof(solution));
+      memset(self->solution, 0, sizeof(self->solution));
       for (i = 0; i < 81; i++) {
-        int r = solrow[i];
-        solution[r/9] = r%9+1;
+        int r = self->solrow[i];
+        self->solution[r/9] = r%9+1;
       }
 
-      dumpsoln();
+      /* dumpsoln(); */
     }
     return solutions + 1;
   }
 
-  c = forcingcol ? forcingcol : mincol();
+  c = forcingcol ? forcingcol : mincol(self);
   dbprintf("Choosing col %d%s\n", c, forcingcol ? " (forced)" : "");
   explaincol(c);
 
-  if (nchoices >= 2) {
+  if (self->nchoices >= 2) {
     backtracks++;
-    if (first_branch == -1) {
-      first_branch = level;
+    if (self->first_branch == -1) {
+      self->first_branch = level;
     }
   }
 
-  for (j = 0; j < nrows[c]; j++) {
-    int r = row[c][j];
+  for (j = 0; j < self->nrows[c]; j++) {
+    int r = self->row[c][j];
 
-    if (rowused[r]) {
+    if (self->rowused[r]) {
       continue;
     }
 
-    solrow[level] = r;
+    self->solrow[level] = r;
 
     dbprintf("row %d (%d,%d)=%d\n", r, r/81+1, (r/9)%9+1, r%9+1);
 
     impossible = 0;
     forcingcol = 0;
-    for (i = 0; i < ncols[r]; i++) {
-      int c1 = col[r][i];
-      colused[c1]++;
+    for (i = 0; i < self->ncols[r]; i++) {
+      int c1 = self->col[r][i];
+      self->colused[c1]++;
     }
-    for (i = 0; i < ncols[r]; i++) {
-      int c1 = col[r][i];
+    for (i = 0; i < self->ncols[r]; i++) {
+      int c1 = self->col[r][i];
       int j;
-      for (j = 0; j < nrows[c1]; j++) {
-        int r1 = row[c1][j];
-        rowused[r1]++;
+      for (j = 0; j < self->nrows[c1]; j++) {
+        int r1 = self->row[c1][j];
+        self->rowused[r1]++;
 #if 0
         dbprintf("using ");
         explainrow(r1);
 #endif
-        if (rowused[r1] == 1) {
+        if (self->rowused[r1] == 1) {
           int k;
 
-          for (k = 0; k < ncols[r1]; k++) {
+          for (k = 0; k < self->ncols[r1]; k++) {
             int c2;
-            c2 = col[r1][k];
-            count[c2]--;
-            if (!colused[c2]) {
-              int v = count[c2];
+            c2 = self->col[r1][k];
+            self->count[c2]--;
+            if (!self->colused[c2]) {
+              int v = self->count[c2];
 
 #if 0
               dbprintf("reduced %d to %d ", c2, v);
@@ -279,7 +254,7 @@ static int search(int level, int solutions, int forcingcol, int backtracks)
     }
 
     if (!impossible) {
-      solutions = search(level + 1, solutions, forcingcol, backtracks);
+      solutions = search(self, level + 1, solutions, forcingcol, backtracks);
       if (solutions >= 2)
         break;
     }
@@ -288,18 +263,18 @@ static int search(int level, int solutions, int forcingcol, int backtracks)
       explaincol(reason);
     }
 
-    for (i = 0; i < ncols[r]; i++) {
+    for (i = 0; i < self->ncols[r]; i++) {
       int j;
-      int c1 = col[r][i];
-      colused[c1]--;
-      for (j = 0; j < nrows[c1]; j++) {
-        int r1 = row[c1][j];
-        rowused[r1]--;
-        if (rowused[r1] == 0) {
+      int c1 = self->col[r][i];
+      self->colused[c1]--;
+      for (j = 0; j < self->nrows[c1]; j++) {
+        int r1 = self->row[c1][j];
+        self->rowused[r1]--;
+        if (self->rowused[r1] == 0) {
           int k;
-          for (k = 0; k < ncols[r1]; k++) {
-            int c2 = col[r1][k];
-            count[c2]++;
+          for (k = 0; k < self->ncols[r1]; k++) {
+            int c2 = self->col[r1][k];
+            self->count[c2]++;
           }
         }
       }
@@ -308,90 +283,91 @@ static int search(int level, int solutions, int forcingcol, int backtracks)
   return solutions;
 }
 
-static void initcounts()
+static void initcounts(struct solver *self)
 {
   int r, i;
 
-  memset(count, 0, sizeof(count));
+  memset(self->count, 0, sizeof(self->count));
   for (r = 0; r < NROWS; r++) {
-    if (rowused[r] == 0) {
-      for (i = 0; i < ncols[r]; i++) {
-        count[col[r][i]]++;
+    if (self->rowused[r] == 0) {
+      for (i = 0; i < self->ncols[r]; i++) {
+        self->count[self->col[r][i]]++;
       }
     }
   }
 }
 
-static int applyclues(int *puzzle)
+static int applyclues(struct solver *self, int *puzzle)
 {
   int i;
   int clues = 0;
 
-  memset(rowused, 0, sizeof(rowused));
-  memset(colused, 0, sizeof(colused));
+  memset(self->rowused, 0, sizeof(self->rowused));
+  memset(self->colused, 0, sizeof(self->colused));
   for (i = 0; i < 81; i++) {
     if (puzzle[i]) {
       int r, j;
 
       r = i * 9 + (puzzle[i] - 1);
-      solrow[clues] = r;
+      self->solrow[clues] = r;
 
       clues++;
       dbprintf("clue ");
       explainrow(r);
-      for (j = 0; j < ncols[r]; j++) {
-        int d = col[r][j];
+      for (j = 0; j < self->ncols[r]; j++) {
+        int d = self->col[r][j];
         int k;
-        if (colused[d])
+        if (self->colused[d])
           return -1;
-        colused[d] = 1;
-        for (k = 0; k < nrows[d]; k++) {
-          rowused[row[d][k]]++;
+        self->colused[d] = 1;
+        for (k = 0; k < self->nrows[d]; k++) {
+          self->rowused[self->row[d][k]]++;
         }
       }
     }
   }
 
-  initcounts();
+  initcounts(self);
 
   return clues;
 }
 
-  static int
-search2(int clues)
+static int
+search2(struct solver *self, int clues)
 {
-  solver_backtracks = 0;
-  first_branch = -1;
-  return search(clues, 0, 0, 0);
+  self->solver_backtracks = 0;
+  self->first_branch = -1;
+  return search(self, clues, 0, 0, 0);
 }
 
 
-int solve(int *puzzle) {
+int
+solve(struct solver *self, int *puzzle) {
   int nsol;
-  int clues = applyclues(puzzle);
+  int clues = applyclues(self, puzzle);
   /* printgrid(puzzle, stdout); */
   if (clues == -1)
     return 0;
-  nsol = search2(clues);
+  nsol = search2(self, clues);
 
   return nsol;
 }
 
-  int
-easier(int *puzzle)
+int
+easier(struct solver *self, int *puzzle)
 {
   int n;
-  int clues = applyclues(puzzle);
-  solver_backtracks = 0;
-  first_branch = -1;
-  n = search2(clues);
+  int clues = applyclues(self, puzzle);
+  self->solver_backtracks = 0;
+  self->first_branch = -1;
+  n = search2(self, clues);
   assert(n == 1);
-  if (first_branch != -1) {
-    int r = solution_row[first_branch];
+  if (self->first_branch != -1) {
+    int r = self->solution_row[self->first_branch];
     int cell = r/9;
     int newval = r%9+1;
 
-    dbprintf("first_branch = %d; r = %d\n", first_branch, r);
+    dbprintf("first_branch = %d; r = %d\n", self->first_branch, r);
 
     dbprintf("changing puzzle[%d] from %d to %d\n", cell, puzzle[cell], newval);
     puzzle[cell] = newval;

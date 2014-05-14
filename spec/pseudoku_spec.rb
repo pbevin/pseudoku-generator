@@ -41,6 +41,7 @@ describe Pseudoku do
     end
 
     it "has 1 backtrack" do
+      pseudoku.solve hard_puzzle
       expect(pseudoku.backtracks).to eq(1)
     end
 

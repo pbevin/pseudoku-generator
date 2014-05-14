@@ -4,6 +4,10 @@ require "pseudoku/pseudoku"
 class Pseudoku
   DIGITS = %w[ 1 2 3 4 5 6 7 8 9 ]
 
+  def initialize
+    nodebug
+  end
+
   def generate2
     pare_down(random_puzzle)
   end
