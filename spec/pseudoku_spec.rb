@@ -11,8 +11,8 @@ RSpec::Matchers.define :be_a_solution_of do |puzzle|
 end
 
 
-describe Pseudoku do
-  let(:pseudoku) { subject }
+describe Pseudoku::Solver do
+  let(:solver) { subject }
 
   let(:easy_puzzle)   { "...5...8......1..2..5.9...4.6..34..9.38...26.2..61..5.9...2.3..6..8......4...5..." }
   let(:easy_solution) { "124563987796481532385792614561234879438957261279618453957126348613849725842375196" }
@@ -24,12 +24,12 @@ describe Pseudoku do
   describe "an easy puzzle" do
 
     it "has a solution" do
-      expect(pseudoku.solve easy_puzzle).to eq(easy_solution)
+      expect(solver.solve easy_puzzle).to eq(easy_solution)
     end
 
     it "has 0 backtracks" do
-      pseudoku.solve easy_puzzle
-      expect(pseudoku.backtracks).to eq(0)
+      solver.solve easy_puzzle
+      expect(solver.backtracks).to eq(0)
     end
 
   end
@@ -37,12 +37,12 @@ describe Pseudoku do
   describe "a hard puzzle" do
 
     it "has a solution" do
-      expect(pseudoku.solve hard_puzzle).to eq(hard_solution)
+      expect(solver.solve hard_puzzle).to eq(hard_solution)
     end
 
     it "has 1 backtrack" do
-      pseudoku.solve hard_puzzle
-      expect(pseudoku.backtracks).to eq(1)
+      solver.solve hard_puzzle
+      expect(solver.backtracks).to eq(1)
     end
 
   end
@@ -50,7 +50,7 @@ describe Pseudoku do
   describe "an unsolvable puzzle" do
 
     it "has no solution" do
-      expect(pseudoku.solve unsolvable).to be_nil
+      expect(solver.solve unsolvable).to be_nil
     end
 
   end
@@ -58,14 +58,19 @@ describe Pseudoku do
   describe "a puzzle with no clues" do
 
     it "has no solution" do
-      expect(pseudoku.solve no_clues).to eq(false)
+      expect(solver.solve no_clues).to eq(false)
     end
 
   end
+end
+
+describe Pseudoku::Generator do
+  let(:solver) { Pseudoku::Solver.new }
+  let(:generator) { Pseudoku::Generator.new(solver) }
 
   describe '#generate' do
-    let(:puzzle1) { pseudoku.generate2 }
-    let(:puzzle2) { pseudoku.generate2 }
+    let(:puzzle1) { generator.generate }
+    let(:puzzle2) { generator.generate }
 
     it "generates a puzzle" do
       expect(puzzle1.length).to eq(81)
@@ -77,8 +82,8 @@ describe Pseudoku do
 
     it "can solve a puzzle it generated" do
       10.times do
-        puzzle = pseudoku.generate2
-        solution = pseudoku.solve(puzzle)
+        puzzle = generator.generate
+        solution = solver.solve(puzzle)
         expect(solution).to be_a_solution_of(puzzle)
       end
     end

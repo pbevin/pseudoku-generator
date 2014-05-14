@@ -67,10 +67,12 @@ static VALUE ps_backtracks(VALUE self) {
 }
 
 void Init_pseudoku() {
-  VALUE pseudoku = rb_define_class("Pseudoku", rb_cObject);
-  rb_define_method(pseudoku, "generate", ps_generate, 0);
-  rb_define_method(pseudoku, "solve", ps_solve, 1);
-  rb_define_method(pseudoku, "backtracks", ps_backtracks, 0);
-  rb_define_method(pseudoku, "debug", ps_debug, 0);
-  rb_define_method(pseudoku, "nodebug", ps_nodebug, 0);
+  VALUE pseudoku = rb_define_module("Pseudoku");
+
+  VALUE solver = rb_define_class_under(pseudoku, "Solver", rb_cObject);
+  rb_define_method(solver, "generate", ps_generate, 0);
+  rb_define_method(solver, "solve", ps_solve, 1);
+  rb_define_method(solver, "backtracks", ps_backtracks, 0);
+  rb_define_method(solver, "debug", ps_debug, 0);
+  rb_define_method(solver, "nodebug", ps_nodebug, 0);
 }

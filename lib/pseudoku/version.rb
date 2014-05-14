@@ -1,3 +1,3 @@
-class Pseudoku
+module Pseudoku
   VERSION = "0.0.1"
 end
