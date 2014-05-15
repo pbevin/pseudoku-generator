@@ -12,7 +12,6 @@ module Pseudoku
     end
 
     def random_puzzle
-      symmetric = true
       grid = "." * 81
 
       loop do
@@ -22,13 +21,13 @@ module Pseudoku
         end while grid[pos] != '.'
 
         grid[pos] = DIGITS.sample
-        grid[reflect] = DIGITS.sample if symmetric
+        grid[reflect] = DIGITS.sample
 
         case @solver.solve(grid)
         when nil
           # No solution, back out
           grid[pos] = '.'
-          grid[reflect] = '.' if symmetric
+          grid[reflect] = '.'
         when false
           # multiple solutions, keep going
         else
@@ -46,12 +45,11 @@ module Pseudoku
       (0..40).to_a.shuffle.each do |pos|
         reflect = 80 - pos
         if grid[pos]
-          new_grid = grid.dup
-          new_grid[pos] = '.'
-          new_grid[reflect] = '.'
+          a, b = grid[pos], grid[reflect]
+          grid[pos] = grid[reflect] = "."
 
-          if @solver.solve(new_grid)
-            grid = new_grid
+          if !@solver.solve(grid)
+            grid[pos], grid[reflect] = a, b
           end
         end
       end
