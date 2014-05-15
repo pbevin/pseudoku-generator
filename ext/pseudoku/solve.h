@@ -4,8 +4,6 @@
 #define NROWS 729
 #define NCOLS 500
 
-extern void permute(int *perm, int len);
-
 struct solver {
   short row[NCOLS][9];
   short col[NROWS][7];

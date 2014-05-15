@@ -32,23 +32,6 @@
 
 int solver_debug = 0;
 
-
-/* Algorithm P, Knuth section 3.4.2 */
-void permute(int *P, int len)
-{
-  int i;
-  for (i = 0; i < len; i++) {
-    P[i] = i;
-  }
-
-  /* int i; */
-  /* for (i = 0; i < len; i++) { */
-  /*   int j = random() % (i + 1); */
-  /*   P[i] = P[j]; */
-  /*   P[j] = i; */
-  /* } */
-}
-
 static int dbprintf(char *fmt, ...)
 {
   va_list ap;

@@ -26,6 +26,17 @@ static char ratingbuf[100];
 
 static char gridchar[11] = ".123456789";
 
+/* Algorithm P, Knuth section 3.4.2 */
+void permute(int *P, int len)
+{
+  int i;
+  for (i = 0; i < len; i++) {
+    int j = random() % (i + 1);
+    P[i] = P[j];
+    P[j] = i;
+  }
+}
+
 void generate(char *output) {
   int grid[81];
   int perm[81];
