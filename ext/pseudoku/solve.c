@@ -71,6 +71,19 @@ static void explaincol(int c)
 }
 
 
+static int
+calc_rownum(c, r) {
+  if (c < 81)
+    return 9*c + r;
+  else
+    return (c-81) + 9 * r;
+}
+
+#define COL0(r) (r/9)
+#define COL1(r) (81 + (r/81)*9 + r%9)
+#define COL2(r) (162 + r%81)
+#define COL3(r) (243 + (r / 243) * 27 + ((r / 27) * 9) % 27 + r % 9)
+
 /* Call before first call to solve()
 */
 void initsolve(struct solver *self)
@@ -105,6 +118,16 @@ void initsolve(struct solver *self)
   self->colcount = base;
 
   for (r = 0; r < NROWS; r++) {
+    assert (self->col[r][0] == r / 9);
+    assert (self->col[r][1] == 81 + (r/81)*9 + r%9);
+    assert (self->col[r][2] == 162 + r%81);
+    assert (self->col[r][3] == 243 + (r / 243) * 27 + ((r / 27) * 9) % 27 + r % 9);
+
+    assert (self->col[r][0] == COL0(r));
+    assert (self->col[r][1] == COL1(r));
+    assert (self->col[r][2] == COL2(r));
+    assert (self->col[r][3] == COL3(r));
+
     int i;
     for (i = 0; i < self->ncols[r]; i++) {
       c = self->col[r][i];
@@ -117,6 +140,23 @@ void initsolve(struct solver *self)
       assert(self->nrows[c] <= ROWS_SET);
     }
   }
+
+#if 0
+  for (c = 0; c < 324; c++) {
+    printf("col %d:", c);
+    for (r = 0; r < 9; r++) {
+      printf(" %d", self->row[c][r]);
+    }
+    printf("\n");
+
+    printf("XXX %d:", c);
+    for (r = 0; r < 9; r++) {
+      printf(" %d", calc_rownum(c, r));
+      assert (self->row[c][r] == calc_rownum(c, r));
+    }
+    printf("\n");
+  }
+#endif
 }
 
 
@@ -196,7 +236,7 @@ static int search(struct solver *self, int level, int solutions, int forcingcol,
     forcingcol = 0;
     for (i = 0; i < self->ncols[r]; i++) {
       int c1 = self->col[r][i];
-      self->colused[c1]++;
+      self->colused[c1] = 1;
     }
     for (i = 0; i < self->ncols[r]; i++) {
       int c1 = self->col[r][i];
@@ -204,6 +244,7 @@ static int search(struct solver *self, int level, int solutions, int forcingcol,
       for (j = 0; j < self->nrows[c1]; j++) {
         int r1 = self->row[c1][j];
         self->rowused[r1]++;
+        /* assert (self->rowused[r1] == 1); */
 #if 0
         dbprintf("using ");
         explainrow(r1);
@@ -249,7 +290,7 @@ static int search(struct solver *self, int level, int solutions, int forcingcol,
     for (i = 0; i < self->ncols[r]; i++) {
       int j;
       int c1 = self->col[r][i];
-      self->colused[c1]--;
+      self->colused[c1] = 0;
       for (j = 0; j < self->nrows[c1]; j++) {
         int r1 = self->row[c1][j];
         self->rowused[r1]--;
