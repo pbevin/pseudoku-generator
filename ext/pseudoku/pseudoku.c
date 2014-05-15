@@ -3,8 +3,6 @@
 #include "generate.h"
 #include "solve.h"
 
-int debug = 0;
-
 static VALUE ps_alloc(VALUE solverClass) {
   struct solver *solver = malloc(sizeof(struct solver));
   memset(solver, 0, sizeof(*solver));
@@ -48,16 +46,6 @@ static VALUE ps_solve(VALUE self, VALUE pattern) {
   }
 }
 
-static VALUE ps_debug(VALUE self) {
-  debug = 1;
-  return self;
-}
-
-static VALUE ps_nodebug(VALUE self) {
-  debug = 0;
-  return self;
-}
-
 static VALUE ps_backtracks(VALUE self) {
   struct solver *solver;
 
@@ -79,6 +67,4 @@ void Init_pseudoku() {
   rb_define_method(solver, "generate", ps_generate, 0);
   rb_define_method(solver, "solve", ps_solve, 1);
   rb_define_method(solver, "backtracks", ps_backtracks, 0);
-  rb_define_method(solver, "debug", ps_debug, 0);
-  rb_define_method(solver, "nodebug", ps_nodebug, 0);
 }
