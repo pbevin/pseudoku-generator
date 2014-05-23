@@ -68,33 +68,14 @@ static VALUE ps_dlx_alloc(VALUE dlxClass) {
   return Data_Wrap_Struct(dlxClass, NULL, free, solver); // XXX dlx_free
 }
 
-static VALUE ps_dlx_one_arg(VALUE self, VALUE arg, void (*func)(struct dlx *, const char *name)) {
+static VALUE ps_dlx_solve(VALUE self, VALUE arg) {
   struct dlx *solver;
   const char *name = StringValueCStr(arg);
 
   Data_Get_Struct(self, struct dlx, solver);
-  func(solver, name);
-  return Qnil;
+  int rc = dlx_solve(solver, name);
+  return INT2NUM(rc);
 }
-
-static VALUE ps_dlx_cover_column(VALUE self, VALUE name) {
-  return ps_dlx_one_arg(self, name, dlx_cover_column);
-}
-
-static VALUE ps_dlx_uncover_column(VALUE self, VALUE name) {
-  return ps_dlx_one_arg(self, name, dlx_uncover_column);
-}
-
-static VALUE ps_dlx_search(VALUE self) {
-  struct dlx *solver;
-
-  Data_Get_Struct(self, struct dlx, solver);
-  return dlx_search(solver);
-}
-
-
-
-
 
 void Init_pseudoku() {
   VALUE pseudoku = rb_define_module("Pseudoku");
@@ -107,7 +88,5 @@ void Init_pseudoku() {
 
   VALUE dlx = rb_define_class_under(pseudoku, "DLX", rb_cObject);
   rb_define_alloc_func(dlx, ps_dlx_alloc);
-  rb_define_method(dlx, "cover", ps_dlx_cover_column, 1);
-  rb_define_method(dlx, "uncover", ps_dlx_uncover_column, 1);
-  rb_define_method(dlx, "search", ps_dlx_search, 0);
+  rb_define_method(dlx, "solve", ps_dlx_solve, 1);
 }

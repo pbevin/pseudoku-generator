@@ -78,7 +78,7 @@ class ExactCover
     while i != c
       j = i.l
       while j != i
-        j.c.len -= 1
+        j.c.len += 1
         j.d.u = j
         j.u.d = j
 
