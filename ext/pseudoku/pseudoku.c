@@ -2,6 +2,7 @@
 #include <ctype.h>
 #include "generate.h"
 #include "solve.h"
+#include "dlx.h"
 
 static VALUE ps_alloc(VALUE solverClass) {
   struct solver *solver = malloc(sizeof(struct solver));
@@ -59,6 +60,42 @@ static VALUE ps_generate(VALUE self) {
   return rb_str_new2(grid);
 }
 
+/////////////////////////
+
+static VALUE ps_dlx_alloc(VALUE dlxClass) {
+  struct dlx *solver = malloc(sizeof(struct solver));
+  dlx_solver_init(solver);
+  return Data_Wrap_Struct(dlxClass, NULL, free, solver); // XXX dlx_free
+}
+
+static VALUE ps_dlx_one_arg(VALUE self, VALUE arg, void (*func)(struct dlx *, const char *name)) {
+  struct dlx *solver;
+  const char *name = StringValueCStr(arg);
+
+  Data_Get_Struct(self, struct dlx, solver);
+  func(solver, name);
+  return Qnil;
+}
+
+static VALUE ps_dlx_cover_column(VALUE self, VALUE name) {
+  return ps_dlx_one_arg(self, name, dlx_cover_column);
+}
+
+static VALUE ps_dlx_uncover_column(VALUE self, VALUE name) {
+  return ps_dlx_one_arg(self, name, dlx_uncover_column);
+}
+
+static VALUE ps_dlx_search(VALUE self) {
+  struct dlx *solver;
+
+  Data_Get_Struct(self, struct dlx, solver);
+  return dlx_search(solver);
+}
+
+
+
+
+
 void Init_pseudoku() {
   VALUE pseudoku = rb_define_module("Pseudoku");
 
@@ -67,4 +104,10 @@ void Init_pseudoku() {
   rb_define_method(solver, "generate", ps_generate, 0);
   rb_define_method(solver, "solve", ps_solve, 1);
   rb_define_method(solver, "backtracks", ps_backtracks, 0);
+
+  VALUE dlx = rb_define_class_under(pseudoku, "DLX", rb_cObject);
+  rb_define_alloc_func(dlx, ps_dlx_alloc);
+  rb_define_method(dlx, "cover", ps_dlx_cover_column, 1);
+  rb_define_method(dlx, "uncover", ps_dlx_uncover_column, 1);
+  rb_define_method(dlx, "search", ps_dlx_search, 0);
 }
