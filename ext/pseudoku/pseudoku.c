@@ -74,7 +74,11 @@ static VALUE ps_dlx_solve(VALUE self, VALUE arg) {
 
   Data_Get_Struct(self, struct dlx, solver);
   int rc = dlx_solve(solver, name);
-  return INT2NUM(rc);
+  if (rc == 0) {
+    return Qnil;
+  } else {
+    return rb_str_new(dlx_solution(solver), 81);
+  }
 }
 
 void Init_pseudoku() {

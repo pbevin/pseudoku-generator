@@ -1,23 +1,25 @@
 #include <stdio.h>
 #include "dlx.h"
 
-struct column;
 struct node {
   struct node *l, *r, *u, *d;
   struct column *c;
   char rowname[24];
 };
+
 struct column {
   struct node node;
   int len;
   char name[4];
   struct column *prev, *next;
 };
+
 struct dlx {
   struct column h;
   struct column cols[324];
   struct node nodes[729 * 4];
-  struct node *solution[81];
+  struct node *solnodes[81];
+  char solution[82];
 };
 
 #define BOX(r, c) (1 + 3 * ((r-1) / 3) + ((c-1) / 3))
@@ -60,17 +62,18 @@ static void uncover(struct dlx *solver, struct column *c) {
 
 static void printsoln(struct dlx *solver, int k) {
   int i;
-  printf("Solution %d:\n", k);
   for (i = 0; i < k; i++) {
-    int k = (solver->solution[i] - solver->nodes) / 4;
-    int r = 1 + k / 81;
-    int c = 1 + (k / 9) % 9;
+    int k = (solver->solnodes[i] - solver->nodes) / 4;
+    int i = k / 9;
     int d = 1 + k % 9;
-    printf("  %d at (%d, %d)\n", d, r, c);
+
+    solver->solution[i] = '0' + d;
   }
 }
 
 static int search(struct dlx *solver, int k) {
+  printf("k=%d\n", k);
+  int solutions = 0;
   /* printf("k = %d\n", k); */
   struct column *c = solver->h.next;
   struct node *r, *j;
@@ -84,11 +87,15 @@ static int search(struct dlx *solver, int k) {
   cover(solver, c);
 
   for (r = c->node.d; r != &c->node; r = r->d) {
-    solver->solution[k] = r;
+    solver->solnodes[k] = r;
     for (j = r->r; j != r; j = j->r) {
       cover(solver, j->c);
     }
-    search(solver, k+1);
+    int rc = search(solver, k+1);
+    solutions += search(solver, k+1);
+    if (k == 0) {
+      printf("Solutions increased by %d to %d\n", rc, solutions);
+    }
 
     for (j = r->l; j != r; j = j->l) {
       uncover(solver, j->c);
@@ -96,7 +103,7 @@ static int search(struct dlx *solver, int k) {
   }
   uncover(solver, c);
 
-  return 0;
+  return solutions;
 }
 
 static void mkcols(struct dlx *solver) {
@@ -179,28 +186,46 @@ void dlx_solver_init(struct dlx *solver) {
 
 }
 
-static void coverall(struct dlx *solver, int r, int c, int d) {
-  int b = BOX(r, c);
+static void cover_clues(struct dlx *solver, const char clues[81], void (*fn)(struct dlx *, struct column *), int dir) {
+  for (int n = 0; n < 81; n++) {
+    int i = (dir > 0) ? n : 80-n;
 
-  cover(solver, &solver->cols[P(r, c)]);
-  cover(solver, &solver->cols[C(c, d)]);
-  cover(solver, &solver->cols[R(r, d)]);
-  cover(solver, &solver->cols[B(b, d)]);
-}
-
-int dlx_solve(struct dlx *solver, const char clues[81]) {
-  for (int i = 0; i < 81; i++) {
     if (clues[i] == '.') continue;
+
+    solver->solution[i] = clues[i];
 
     int r = 1 + i / 9;
     int c = 1 + i % 9;
     int d = clues[i] - '0';
+    int b = BOX(r, c);
 
-    /* printf("coverall: %d %d %d\n", r, c, d); */
-    coverall(solver, r, c, d);
+    if (dir > 0) {
+      fn(solver, &solver->cols[P(r, c)]);
+      fn(solver, &solver->cols[C(c, d)]);
+      fn(solver, &solver->cols[R(r, d)]);
+      fn(solver, &solver->cols[B(b, d)]);
+    } else {
+      fn(solver, &solver->cols[B(b, d)]);
+      fn(solver, &solver->cols[R(r, d)]);
+      fn(solver, &solver->cols[C(c, d)]);
+      fn(solver, &solver->cols[P(r, c)]);
+    }
   }
+}
 
-  return search(solver, 0);
+int dlx_solve(struct dlx *solver, const char clues[81]) {
+  printf("dlx_solve\n");
+  cover_clues(solver, clues, cover, 1);
+  solver->solution[81] = '\0';
+
+  int rc = search(solver, 0);
+
+  cover_clues(solver, clues, uncover, -1);
+  return rc;
+}
+
+const char *dlx_solution(struct dlx *solver) {
+  return solver->solution;
 }
 
 #ifdef MAIN
@@ -210,6 +235,7 @@ main() {
 
   struct dlx solver;
   dlx_solver_init(&solver);
+  dlx_solve(&solver, puz);
   dlx_solve(&solver, puz);
   return 0;
 }

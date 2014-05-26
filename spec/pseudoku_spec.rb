@@ -65,7 +65,7 @@ describe Pseudoku::Solver do
 end
 
 describe Pseudoku::Generator do
-  let(:solver) { Pseudoku::Solver.new }
+  let(:solver) { Pseudoku::DLX.new }
   let(:generator) { Pseudoku::Generator.new(solver) }
 
   describe '#generate' do
